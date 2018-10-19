@@ -66,6 +66,9 @@ if __name__ == "__main__":
                         help="LaTeX \macros to remove entirely")
     parser.add_argument("--strip-macro", default=[], action="append",
                         help="LaTeX \macros to strip (replacing with their contents)")
+    parser.add_argument("--replace-abbrev", action='append', nargs=2,
+                        metavar=('abbrev', 'replacement'),
+                        help="replace \abbrev with replacement")
     parser.add_argument("--sys", help="replace \sys macro with this text")
     parser.add_argument("-o", "--output", nargs="?", default=sys.stdout,
                         type=argparse.FileType("w"),
@@ -77,6 +80,9 @@ if __name__ == "__main__":
 
     if args.sys:
         repl.add(macro_re("sys", args=False), args.sys)
+    for (abbrev, replacement) in args.replace_abbrev:
+        repl.add(macro_re(abbrev, args=False), replacement)
+
     for macro in args.rm_macro:
         repl.add(macro_re(macro), "")
     for macro in args.strip_macro:
