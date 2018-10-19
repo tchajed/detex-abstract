@@ -10,10 +10,16 @@ class Replacements:
     def add(self, pattern, replacement):
         self.subs.append( (pattern, replacement) )
 
-    def substitute(self, text):
+    def sub1(self, text):
         for (pattern, repl) in self.subs:
             text = re.sub(pattern, repl, text)
         return text
+
+    def substitute(self, text):
+        new_text = self.sub1(text)
+        if new_text == text:
+            return text
+        return self.substitute(new_text)
 
     def debug(self):
         for (pattern, repl) in self.subs:
@@ -51,15 +57,19 @@ def macro_re(macro_name, args=True):
 
 if __name__ == "__main__":
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser()
 
     parser.add_argument("fname", help="Abstract LaTeX file")
-    parser.add_argument("--rm-macro", nargs="*",
+    parser.add_argument("--rm-macro", default=[], action="append",
                         help="LaTeX \macros to remove entirely")
-    parser.add_argument("--strip-macro", nargs="*",
+    parser.add_argument("--strip-macro", default=[], action="append",
                         help="LaTeX \macros to strip (replacing with their contents)")
     parser.add_argument("--sys", help="replace \sys macro with this text")
+    parser.add_argument("-o", "--output", nargs="?", default=sys.stdout,
+                        type=argparse.FileType("w"),
+                        help="file to output to")
 
     args = parser.parse_args()
 
@@ -67,17 +77,15 @@ if __name__ == "__main__":
 
     if args.sys:
         repl.add(macro_re("sys", args=False), args.sys)
-
-    if args.rm_macro:
-        for macro in args.rm_macro:
-            repl.add(macro_re(macro), "")
-    if args.strip_macro:
-        for macro in args.strip_macro:
-            repl.add(macro_re(macro), r"""\1""")
+    for macro in args.rm_macro:
+        repl.add(macro_re(macro), "")
+    for macro in args.strip_macro:
+        repl.add(macro_re(macro), r"""\1""")
 
     repl.add(macro_re("emph"), r"""_\1_""")
+
     repl.add(r"""$(.*?)$""", lambda m: math_repl.substitute(m.group(1)))
 
     with open(args.fname) as f:
         t = detex(f, repl)
-        print(t, end="")
+        args.output.write(t)
