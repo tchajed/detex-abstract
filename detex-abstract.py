@@ -68,6 +68,7 @@ if __name__ == "__main__":
                         help="LaTeX \macros to strip (replacing with their contents)")
     parser.add_argument("--replace-abbrev", action='append', nargs=2,
                         metavar=('abbrev', 'replacement'),
+                        default=[],
                         help="replace \abbrev with replacement")
     parser.add_argument("--sys", help="replace \sys macro with this text")
     parser.add_argument("-o", "--output", nargs="?", default=sys.stdout,
